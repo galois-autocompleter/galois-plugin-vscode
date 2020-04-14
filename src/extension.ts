@@ -5,17 +5,19 @@ import axios from 'axios';
 
 export function activate(context: vscode.ExtensionContext) {
 	
-    console.log('Galois-autocompleter-plugin is now active!');
+	console.log('Galois-autocompleter-plugin is now active!');
 
 	let provider = vscode.languages.registerCompletionItemProvider({ language: 'python'}, {
 
 		async provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext) {
-			
+		
+			const MAX_LINES_SUPPORTED = 30;
+
 			const lineIndex = position.line;
 
 			const textArray = document.getText().split('\n');
 
-			const textBeforeLineArray = textArray.slice(0, lineIndex);
+			const textBeforeLineArray = textArray.slice(Math.max(0, lineIndex - MAX_LINES_SUPPORTED), lineIndex);
 
 			const textBeforeLineString = textBeforeLineArray.join('\n');
 
@@ -25,7 +27,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 			const textBeforeCursor = textBeforeLineString + '\n' + textLineBeforeCursor;
 
-			const currentLineReplaceRange = new vscode.Range(new vscode.Position(lineIndex, 0), new vscode.Position(lineIndex, textLine.length));
+			const currentLineReplaceRange = new vscode.Range(new vscode.Position(lineIndex, textLineBeforeCursor.length), new vscode.Position(lineIndex, textLine.length));
 
 			const apiUrl : any = vscode.workspace.getConfiguration('galois-autocompleter-plugin').get('apiUrl');
 
@@ -37,7 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
 				const items = data.result.map((suggestion: string) =>{
 					const item = new vscode.CompletionItem(suggestion, vscode.CompletionItemKind.Text);
 					item.additionalTextEdits = [vscode.TextEdit.delete(currentLineReplaceRange)];
-					item.insertText = textLineBeforeCursor + suggestion;
+					item.insertText = suggestion;
 					item.detail = "Galois Autocompleter";
 					item.documentation = suggestion;
 					return item;

@@ -25,6 +25,7 @@
 	"bugs": {
 		"url": "https://github.com/GabrielTamujo/galois-plugin-vscode/issues"
 	},
+	"icon": "images/logo_b.png",
 	"engines": {
 		"vscode": "^1.43.0"
 	},

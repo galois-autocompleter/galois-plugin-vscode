@@ -16,14 +16,15 @@ function activate(context) {
     let provider = vscode.languages.registerCompletionItemProvider({ language: 'python' }, {
         provideCompletionItems(document, position, token, context) {
             return __awaiter(this, void 0, void 0, function* () {
+                const MAX_LINES_SUPPORTED = 30;
                 const lineIndex = position.line;
                 const textArray = document.getText().split('\n');
-                const textBeforeLineArray = textArray.slice(0, lineIndex);
+                const textBeforeLineArray = textArray.slice(Math.max(0, lineIndex - MAX_LINES_SUPPORTED), lineIndex);
                 const textBeforeLineString = textBeforeLineArray.join('\n');
                 const textLine = document.lineAt(lineIndex).text;
                 const textLineBeforeCursor = document.lineAt(lineIndex).text.substr(0, position.character);
                 const textBeforeCursor = textBeforeLineString + '\n' + textLineBeforeCursor;
-                const currentLineReplaceRange = new vscode.Range(new vscode.Position(lineIndex, 0), new vscode.Position(lineIndex, textLine.length));
+                const currentLineReplaceRange = new vscode.Range(new vscode.Position(lineIndex, textLineBeforeCursor.length), new vscode.Position(lineIndex, textLine.length));
                 const apiUrl = vscode.workspace.getConfiguration('galois-autocompleter-plugin').get('apiUrl');
                 try {
                     const { data } = yield axios_1.default.post(apiUrl, {
@@ -32,7 +33,7 @@ function activate(context) {
                     const items = data.result.map((suggestion) => {
                         const item = new vscode.CompletionItem(suggestion, vscode.CompletionItemKind.Text);
                         item.additionalTextEdits = [vscode.TextEdit.delete(currentLineReplaceRange)];
-                        item.insertText = textLineBeforeCursor + suggestion;
+                        item.insertText = suggestion;
                         item.detail = "Galois Autocompleter";
                         item.documentation = suggestion;
                         return item;
